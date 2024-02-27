@@ -1,0 +1,23 @@
+repositories:
+- name: longhorn 
+  url: https://charts.longhorn.io
+- name: dysnix
+  url: https://dysnix.github.io/charts
+
+releases:
+- name: longhorn
+  namespace: longhorn-system
+  chart: longhorn/longhorn
+  version: 1.5.3
+  values:
+  - persistence:
+      defaultClassReplicaCount: 1
+  - csi:
+      attacherReplicaCount: 1
+      provisionerReplicaCount: 1
+      resizerReplicaCount: 1
+      snapshotterReplicaCount: 1
+  - defaultSettings:
+      defaultReplicaCount: 1
+  - longhornUI:
+      replicas: 1

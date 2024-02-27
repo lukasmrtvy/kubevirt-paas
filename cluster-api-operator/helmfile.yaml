@@ -1,0 +1,39 @@
+repositories:
+- name: capi-operator
+  url: https://kubernetes-sigs.github.io/cluster-api-operator
+- name: dysnix
+  url: https://dysnix.github.io/charts
+
+releases:
+- name: capi-operator-variables
+  namespace: capi-operator-system
+  createNamespace: true
+  chart: dysnix/raw
+  version: 0.3.1
+  disableValidation: true
+  values:
+    - resources:
+      - apiVersion: v1
+        kind: Secret
+        metadata:
+          name: capi-variables
+          namespace: capi-operator-system
+        type: Opaque
+        stringData:
+          CLUSTER_TOPOLOGY: "true"
+          EXP_CLUSTER_RESOURCE_SET: "true"
+          EXP_MACHINE_POOL: "true"
+          EXP_KUBEADM_BOOTSTRAP_FORMAT_IGNITION: "true"
+          EXP_BOOTSTRAP_FORMAT_IGNITION: "true"
+
+- name: capi-operator
+  namespace: capi-operator-system
+  chart: capi-operator/cluster-api-operator
+  version: 0.8.1
+  needs:
+  -  capi-operator-system/capi-operator-variables
+  values:
+  - infrastructure: kubevirt:v0.1.8
+  - configSecret:
+      namespace: capi-operator-system
+      name: capi-variables

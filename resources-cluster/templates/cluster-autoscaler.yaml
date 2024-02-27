@@ -1,0 +1,93 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: serviceaccount-autoscaler
+  namespace: default
+  annotations:
+    projectsveltos.io/template: "true"
+data:
+  autoscaler.yaml: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: "{{ .Cluster.metadata.name }}-autoscaler"
+      namespace: "{{ .Cluster.metadata.namespace }}"
+    ---
+    kind: Role
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: "{{ .Cluster.metadata.name }}-autoscaler"
+      namespace: "{{ .Cluster.metadata.namespace }}"
+    rules:
+      - apiGroups:
+        - cluster.x-k8s.io
+        resources:
+        - machinedeployments
+        - machinedeployments/scale
+        - machines
+        - machinesets
+        - machinepools
+        verbs:
+        - get
+        - list
+        - update
+        - watch
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name:  "{{ .Cluster.metadata.name }}-autoscaler"
+      namespace: "{{ .Cluster.metadata.namespace }}"
+    subjects:
+    - kind: ServiceAccount
+      name: "{{ .Cluster.metadata.name }}-autoscaler"
+      namespace: "{{ .Cluster.metadata.namespace }}"
+    roleRef:
+      kind: Role
+      name: "{{ .Cluster.metadata.name }}-autoscaler"
+      apiGroup: rbac.authorization.k8s.io
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: "{{ .Cluster.metadata.name }}-autoscaler"
+      namespace: "{{ .Cluster.metadata.namespace }}"
+      annotations:
+        kubernetes.io/service-account.name: "{{ .Cluster.metadata.name }}-autoscaler"
+    type: kubernetes.io/service-account-token
+---
+# BUG https://github.com/projectsveltos/addon-controller/issues/465
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: secret-info
+  namespace: default
+  annotations:
+    projectsveltos.io/template: "true"
+data:
+  default.yaml: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: cluster-autoscaler-kubeconfig-external
+      namespace: kube-system
+    stringData: 
+      mgmt-kubeconfig: |
+        apiVersion: v1
+        kind: Config
+        clusters:
+        - name: managment-cluster
+          cluster:
+            certificate-authority-data: {{ $data:=(index .MgtmResources  "AutoscalerSecret").data }} {{ (index $data "ca.crt") }}
+            server: "https://${MASTER_PUBLIC_IP}:6443"
+        contexts:
+        - name: managment-cluster
+          context:
+            cluster: managment-cluster
+            user: managment-cluster
+        current-context: managment-cluster
+        users:
+        - name: managment-cluster
+          user:
+            token: {{ (index .MgtmResources  "AutoscalerSecret").data.token | b64dec }}

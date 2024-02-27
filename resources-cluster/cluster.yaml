@@ -1,0 +1,214 @@
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: test
+  namespace: default
+  labels:
+    name: test
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+        - 10.243.0.0/16
+    services:
+      cidrBlocks:
+        - 10.95.0.0/16
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+    kind: KubevirtCluster
+    name: 'test'
+    namespace: default
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: 'test-control-plane'
+    namespace: default
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: KubevirtCluster
+metadata:
+  name: test
+  namespace: default
+spec:
+  controlPlaneServiceTemplate:
+    spec:
+      type: LoadBalancer
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: KubevirtMachineTemplate
+metadata:
+  name: "test-control-plane"
+  namespace: default
+spec:
+  template:
+    spec:
+      virtualMachineBootstrapCheck:
+        checkStrategy: ssh
+      virtualMachineTemplate:
+        metadata:
+          namespace: default
+        spec:
+          dataVolumeTemplates:
+          - metadata:
+              name: "test-boot-volume"
+            spec:
+              pvc:
+                accessModes:
+                - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: "64Gi"
+                storageClassName: "longhorn-ssd"
+              source:
+                pvc:
+                  namespace: default
+                  name: flatcar-kubevirt-3760.2.0
+          runStrategy: Always
+          template:
+            metadata:
+              annotations: 
+                ovn.kubernetes.io/logical_switch: test
+            spec:
+              domain:
+                cpu:
+                  cores: 2
+                memory:
+                  guest: "4Gi"
+                devices:
+                  networkInterfaceMultiqueue: true
+                  disks:
+                    - disk:
+                        bus: virtio
+                      name: dv-volume
+              evictionStrategy: External
+              volumes:
+                - dataVolume:
+                    name: "test-boot-volume"
+                  name: dv-volume
+---
+kind: KubeadmControlPlane
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+metadata:
+  name: "test-control-plane"
+  namespace: default
+spec:
+  replicas: 1
+  machineTemplate:
+    infrastructureRef:
+      kind: KubevirtMachineTemplate
+      apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+      name: "test-control-plane"
+      namespace: default
+  kubeadmConfigSpec:
+    files: []
+    format: ignition
+    clusterConfiguration:
+      networking:
+        dnsDomain: "test.default.local"
+        podSubnet: 10.243.0.0/16
+        serviceSubnet: 10.95.0.0/16
+    initConfiguration:
+      nodeRegistration:
+        criSocket: "/var/run/containerd/containerd.sock"
+    joinConfiguration:
+      nodeRegistration:
+        criSocket: "/var/run/containerd/containerd.sock"
+  version: "1.28.6"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: KubevirtMachineTemplate
+metadata:
+  name: "test-md-0"
+  namespace: default
+spec:
+  template:
+    spec:
+      virtualMachineBootstrapCheck:
+        checkStrategy: ssh
+      virtualMachineTemplate:
+        metadata:
+          namespace: default
+          annotations: 
+            ovn.kubernetes.io/logical_switch: test
+        spec:
+          dataVolumeTemplates:
+          - metadata:
+              name: "test-boot-volume"
+            spec:
+              pvc:
+                accessModes:
+                - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: "64Gi"
+                storageClassName: "longhorn-ssd"
+              source:
+                pvc:
+                  namespace: default
+                  name: flatcar-kubevirt-3760.2.0
+          runStrategy: Always
+          template:
+            metadata:
+              annotations: 
+                ovn.kubernetes.io/logical_switch: test
+            spec:
+              domain:
+                cpu:
+                  cores: 2
+                memory:
+                  guest: "4Gi"
+                devices:
+                  networkInterfaceMultiqueue: true
+                  disks:
+                    - disk:
+                        bus: virtio
+                      name: dv-volume
+              evictionStrategy: External
+              volumes:
+                - dataVolume:
+                    name: "test-boot-volume"
+                  name: dv-volume
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: "test-md-0"
+  namespace: default
+spec:
+  template:
+    spec:
+      files: []
+      format: ignition
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs: {}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: "test-md-0"
+  namespace: default
+  annotations:
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "5"
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "0"
+spec:
+  clusterName: test
+  replicas: 1
+  selector:
+    matchLabels:
+  template:
+    spec:
+      clusterName: test
+      version: "1.28.6"
+      bootstrap:
+        configRef:
+          name: "test-md-0"
+          namespace: default
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+      infrastructureRef:
+        name: "test-md-0"
+        namespace: default
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+        kind: KubevirtMachineTemplate

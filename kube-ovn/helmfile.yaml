@@ -1,0 +1,55 @@
+repositories:
+- name: kubeovn
+  url: https://kubeovn.github.io/kube-ovn
+- name: dysnix
+  url: https://dysnix.github.io/charts
+
+releases:
+- name: kube-ovn
+  namespace: kube-system
+  chart: kubeovn/kube-ovn
+  version: 1.12.4
+  values:
+  - MASTER_NODES: ${MASTER_PUBLIC_IP_CIDR}
+  - func:
+      ENABLE_NP: false
+  - cni_conf:
+      CNI_CONFIG_PRIORITY: "10"
+
+- name: kube-ovn-config
+  namespace: kube-system
+  chart: dysnix/raw
+  version: 0.3.1
+  needs:
+    - kube-system/kube-ovn
+  values:
+    - resources:
+      - apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: cni-configuration
+          namespace: kube-system
+        data:
+          cni-config: |-
+            {
+              "name": "generic-veth",
+              "cniVersion": "0.3.1",
+              "plugins": [
+                {
+                  "type": "kube-ovn",
+                  "server_socket": "/run/openvswitch/kube-ovn-daemon.sock",
+                  "ipam": {
+                      "type": "kube-ovn",
+                      "server_socket": "/run/openvswitch/kube-ovn-daemon.sock"
+                  }
+                },
+                {
+                  "type": "portmap",
+                  "snat": true,
+                  "capabilities": {"portMappings": true}
+                },
+                {
+                  "type": "cilium-cni"
+                }
+              ]
+            }

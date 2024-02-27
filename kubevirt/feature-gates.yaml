@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubevirt-config
+  namespace: kubevirt
+  labels:
+    kubevirt.io: ""
+data:
+  # https://github.com/kubevirt/csi-driver?tab=readme-ov-file#configuring-kubevirt
+  feature-gates: HotplugVolumes

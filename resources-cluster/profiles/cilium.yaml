@@ -1,0 +1,19 @@
+---
+apiVersion: config.projectsveltos.io/v1alpha1
+kind: Profile
+metadata:
+  name: test-cilium
+  namespace: default
+spec:
+  stopMatchingBehavior: WithdrawPolicies
+  clusterSelector: name=test
+  syncMode: Continuous
+  helmCharts:
+  - repositoryURL:    https://helm.cilium.io/
+    repositoryName:   cilium
+    chartName:        cilium/cilium
+    chartVersion:     1.13.1
+    releaseName:      cilium
+    releaseNamespace: kube-system
+    helmChartAction:  Install
+---

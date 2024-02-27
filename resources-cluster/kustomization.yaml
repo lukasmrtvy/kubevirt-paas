@@ -1,0 +1,11 @@
+resources:
+- profiles/cluster-autoscaler.yaml
+- templates/cluster-autoscaler.yaml
+- profiles/kccm.yaml
+- templates/kccm.yaml
+- profiles/csi.yaml
+- templates/csi.yaml
+- profiles/cilium.yaml
+- other-resources/flatcar-cdi.yaml
+- other-resources/lb-pool.yaml
+- other-resources/subnet.yaml

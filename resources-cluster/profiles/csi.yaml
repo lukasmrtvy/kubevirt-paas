@@ -1,0 +1,32 @@
+---
+apiVersion: config.projectsveltos.io/v1alpha1
+kind: Profile
+metadata:
+  name: test-csi
+  namespace: default
+spec:
+  stopMatchingBehavior: WithdrawPolicies
+  clusterSelector: name=test
+  syncMode: ContinuousWithDriftDetection
+  templateResourceRefs:
+  - resource:
+      kind: Secret
+      name: "{{ .ClusterName }}-kubevirt-csi"
+    identifier: csi
+  policyRefs:
+  - deploymentType: Local 
+    kind: ConfigMap
+    name: serviceaccount-infra-csi
+    namespace: default
+  - deploymentType: Remote
+    kind: ConfigMap
+    name: controller-tenant-csi-kubeconfig
+    namespace: default
+  - deploymentType: Remote
+    kind: ConfigMap
+    name: controller-tenant-csi-controller
+    namespace: default
+  - deploymentType: Remote 
+    kind: ConfigMap
+    name: controller-tenant-csi-node
+    namespace: default

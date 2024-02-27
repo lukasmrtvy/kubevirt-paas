@@ -1,0 +1,59 @@
+repositories:
+- name: kyverno
+  url: https://kyverno.github.io/kyverno/
+- name: dysnix
+  url: https://dysnix.github.io/charts
+
+releases:
+- name: kyverno
+  namespace: kyverno
+  chart: kyverno/kyverno
+  createNamespace: true
+  version: 3.1.4
+  values:
+  - backgroundController:
+      rbac:
+        clusterRole:
+          extraResources:
+          - apiGroups:
+            - cdi.kubevirt.io
+            resources:
+            - storageprofiles
+            verbs:
+            - update
+
+# BUG
+# https://github.com/kubevirt/containerized-data-importer/issues/3005
+# https://github.com/kubevirt/kubevirt/issues/7078
+- name: kyverno-policies
+  namespace: kyverno
+  createNamespace: true
+  chart: dysnix/raw
+  version: 0.3.1
+  disableValidation: true
+  needs:
+  - kyverno/kyverno
+  values:
+    - resources:    
+      - apiVersion: kyverno.io/v1
+        kind: ClusterPolicy
+        metadata:
+          name: "add-accessmode-to-storageprofile"
+        spec:
+          rules:
+            - name: "add-accessmode-to-storageprofile"
+              match:
+                any:
+                - resources:
+                    kinds:
+                    - StorageClass
+              mutate:
+                targets:
+                - apiVersion: cdi.kubevirt.io/v1beta1
+                  kind: StorageProfile
+                  name: {{`"{{ request.object.metadata.name }}"`}}
+                patchStrategicMerge:
+                  spec:
+                    claimPropertySets:
+                    - accessModes:
+                      - ReadWriteOnce

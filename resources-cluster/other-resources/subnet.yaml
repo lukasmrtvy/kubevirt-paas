@@ -1,0 +1,18 @@
+apiVersion: kubeovn.io/v1
+kind: Subnet
+metadata:
+  name: test
+  namespace: default
+spec:
+  protocol: IPv4
+  cidrBlock: 10.66.0.0/16
+  excludeIps:
+  - 10.66.0.1..10.66.0.10
+  - 10.66.0.101..10.66.0.151
+  gateway: 10.66.0.1
+  gatewayType: distributed
+  natOutgoing: true
+  routeTable: ""
+  namespaces:
+  - ns1
+  - ns2

@@ -1,0 +1,24 @@
+# BUG
+# https://github.com/kubevirt/containerized-data-importer/issues/3005
+# https://github.com/kubevirt/kubevirt/issues/7078
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: longhorn-ssd
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+parameters:
+  diskSelector: "ssd"
+  nodeSelector: "default"
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: longhorn-hdd
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+parameters:
+  diskSelector: "hdd"
+  nodeSelector: "default"

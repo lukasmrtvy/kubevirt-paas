@@ -1,0 +1,35 @@
+repositories:
+- name: projectsveltos
+  url: https://projectsveltos.github.io/helm-charts
+- name: dysnix
+  url: https://dysnix.github.io/charts
+
+releases:
+- name: projectsveltos
+  namespace: projectsveltos
+  createNamespace: true
+  chart: projectsveltos/projectsveltos
+  version: 0.24.0
+
+- name: projectsveltos-extrarbac
+  namespace: projectsveltos
+  createNamespace: true
+  chart: dysnix/raw
+  version: 0.3.1
+  disableValidation: true
+  needs:
+    - projectsveltos/projectsveltos
+  values:
+    - resources:
+      - apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        metadata:
+          name: addon-controller-extrarbac-rolebinding
+        subjects:
+        - kind: ServiceAccount
+          name: addon-controller
+          namespace: projectsveltos
+        roleRef:
+          kind: ClusterRole
+          name: cluster-admin
+          apiGroup: rbac.authorization.k8s.io

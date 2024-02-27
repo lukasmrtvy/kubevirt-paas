@@ -1,0 +1,28 @@
+---
+apiVersion: config.projectsveltos.io/v1alpha1
+kind: Profile
+metadata:
+  name: test-kccm
+  namespace: default
+spec:
+  stopMatchingBehavior: WithdrawPolicies
+  clusterSelector: name=test
+  syncMode: ContinuousWithDriftDetection
+  templateResourceRefs:
+  - resource:
+      kind: Secret
+      name: "{{ .ClusterName }}-cloud-controller-manager"
+    identifier: kccm
+  policyRefs:
+  - deploymentType: Local 
+    kind: ConfigMap
+    name: controller-infra-kccm-rbac
+    namespace: default
+  - deploymentType: Remote 
+    kind: ConfigMap
+    name: controller-tenant-kccm-kubeconfig
+    namespace: default
+  - deploymentType: Remote 
+    kind: ConfigMap
+    name: controller-tenant-kccm-rbac
+    namespace: default

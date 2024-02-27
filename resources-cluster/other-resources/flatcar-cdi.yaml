@@ -1,0 +1,14 @@
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: DataVolume
+metadata:
+  name: flatcar-kubevirt-3760.2.0
+spec:
+  source:
+      http:
+         url: "https://github.com/lukasmrtvy/image-builder-flatcar/releases/download/flatcar-stable-3760.2.0-kube-v1.28.4/flatcar-stable-3760.2.0-kube-v1.28.4.xz"
+  pvc:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 32G

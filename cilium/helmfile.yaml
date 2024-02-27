@@ -1,0 +1,45 @@
+repositories:
+- name: cilium
+  url: https://helm.cilium.io/
+- name: dysnix
+  url: https://dysnix.github.io/charts
+
+releases:
+- name: cilium
+  namespace:  kube-system
+  chart: cilium/cilium 
+  version: 1.15.1
+  values:
+  - operator:
+      replicas: 1
+  - hubble:
+      relay:
+        enabled: true
+      ui:
+        enabled: true
+  - cni:
+      chainingMode: generic-veth
+      customConf: true
+      configMap: cni-configuration
+  - tunnel: disabled
+  - enableIPv4Masquerade: false
+  - enableIdentityMark: false
+
+- name: cilium-config
+  namespace: cilium
+  createNamespace: true
+  chart: dysnix/raw
+  version: 0.3.1
+  disableValidation: true
+  needs:
+    - cilium/cilium
+  values:
+    - resources:
+      - apiVersion: "cilium.io/v2alpha1"
+        kind: CiliumLoadBalancerIPPool
+        metadata:
+          name: "default"
+          namespace: cilium
+        spec:
+          blocks:
+          - cidr: ${MASTER_PUBLIC_IP_CIDR}

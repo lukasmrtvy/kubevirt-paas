@@ -1,0 +1,51 @@
+---
+apiVersion: config.projectsveltos.io/v1alpha1
+kind: Profile
+metadata:
+  name: test-ca
+  namespace: default
+spec:
+  stopMatchingBehavior: WithdrawPolicies
+  clusterSelector: name=test
+  syncMode: ContinuousWithDriftDetection
+  helmCharts:
+  - repositoryURL:    https://kubernetes.github.io/autoscaler
+    repositoryName:   default
+    chartName:        default/cluster-autoscaler
+    chartVersion:     9.35.0
+    releaseName:      clusterapi-cluster-autoscaler
+    releaseNamespace: kube-system
+    helmChartAction:  Install
+    values: |
+      autoDiscovery:
+        clusterName: "{{ .Cluster.metadata.name }}"
+        labels:
+          - namespace: "{{ .Cluster.metadata.namespace }}"
+      cloudProvider: clusterapi
+      clusterAPIMode: incluster-kubeconfig
+      clusterAPIKubeconfigSecret: "cluster-autoscaler-kubeconfig-external"
+      clusterAPICloudConfigPath: /etc/kubernetes/mgmt-kubeconfig
+  templateResourceRefs:
+  - resource:
+      kind: Secret
+      name: "{{ .ClusterName }}-autoscaler"
+    identifier: AutoscalerSecret
+  policyRefs:
+  - deploymentType: Local 
+    kind: ConfigMap
+    name: serviceaccount-autoscaler 
+    namespace: default
+  - deploymentType: Remote 
+    kind: ConfigMap
+    name: secret-info
+    namespace: default
+
+
+
+
+
+
+
+
+
+

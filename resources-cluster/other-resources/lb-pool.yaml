@@ -1,0 +1,8 @@
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: "test"
+  namespace: default
+spec:
+  blocks:
+  - cidr: ${CLUSTER_PUBLIC_IP_CIDR}
