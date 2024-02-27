@@ -1,5 +1,5 @@
 # Info
-Kubernetes as a service platform with based on Flatcar OS 
+**Minimal** Kubernetes as a service platform based on Flatcar OS 
 
 # Installation order
 
