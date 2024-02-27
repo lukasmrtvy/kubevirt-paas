@@ -1,0 +1,4 @@
+resources:
+- https://github.com/kubernetes-csi/external-snapshotter//client/config/crd?ref=v7.0.1
+- https://github.com/kubernetes-csi/external-snapshotter//deploy/kubernetes/snapshot-controller?ref=v7.0.1
+- snapshotclass.yaml
